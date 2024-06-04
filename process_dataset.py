@@ -2,15 +2,16 @@ import parselmouth
 from parselmouth.praat import call
 from pathlib import Path
 from sklearn.model_selection import train_test_split
-import json
+from sklearn.preprocessing import MinMaxScaler
+import pickle
 import numpy as np
 from tqdm import tqdm
 
 
 def dump_to_json(data, file_path):
     try:
-        with open(file_path, 'w') as json_file:
-            json.dump(data, json_file)
+        with open(file_path, 'wb') as pickle_file:
+            pickle.dump(data, pickle_file)
         print(f"Data successfully dumped to {file_path}")
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -25,7 +26,9 @@ def get_features(voice_path, f0_min, f0_max, unit):
     hnr = call(harmonicity, "Get mean", 0, 0)
     local_jitter = call(point_process, "Get jitter (local)", 0, 0, 0.0001, 0.02, 1.3)
     local_shimmer = call([raw_data, point_process], "Get shimmer (local)", 0, 0, 0.0001, 0.02, 1.3, 1.6)
-    return [mean_f0, stdev_f0, hnr, local_jitter, local_shimmer]
+    mfcc_data = raw_data.to_mfcc(number_of_coefficients=12).to_array()
+    mfcc = np.mean(mfcc_data, axis=1)
+    return [mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] + list(mfcc)
 
 def load_svd(datasets_path: Path):
     labels = []
@@ -62,8 +65,8 @@ if __name__ == "__main__":
     x_train = []
     x_test = []
 
-    train_file = "train_set.json"
-    test_file = "test_set.json"
+    train_file = "train_set.pk"
+    test_file = "test_set.pk"
     train_to_dump = {"data": x_train,
                      "labels": labels_train}
     test_to_dump = {"data": x_test,
@@ -75,6 +78,8 @@ if __name__ == "__main__":
             x_train.append(features)
         else:
             indices_to_remove.append(idx)
+    train_to_dump["data"] = MinMaxScaler().fit_transform(np.array(train_to_dump["data"]))
+    print(train_to_dump["data"].shape)
     train_to_dump["labels"] = remove_items_by_indices(train_to_dump["labels"], indices_to_remove)
     dump_to_json(train_to_dump, train_file)
 
@@ -85,6 +90,7 @@ if __name__ == "__main__":
             x_test.append(features)
         else:
             indices_to_remove.append(idx)
+    test_to_dump["data"] = MinMaxScaler().fit_transform(np.array(test_to_dump["data"]))
     test_to_dump["labels"] = remove_items_by_indices(test_to_dump["labels"], indices_to_remove)
     dump_to_json(test_to_dump, test_file)
 
