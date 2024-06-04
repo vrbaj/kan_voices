@@ -3,6 +3,7 @@ from parselmouth.praat import call
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 import json
+import numpy as np
 from tqdm import tqdm
 
 
@@ -40,6 +41,17 @@ def load_svd(datasets_path: Path):
             labels += len(files) * [1]
     return file_paths, labels
 
+
+def remove_items_by_indices(lst, indices):
+    # Sort the indices in descending order
+    indices = sorted(indices, reverse=True)
+    # Remove items from the list using the sorted indices
+    for index in indices:
+        if 0 <= index < len(lst):
+            lst.pop(index)
+    return lst
+
+
 if __name__ == "__main__":
     datasets_path = Path(__file__).parent.joinpath("datasets")
     file_paths, labels = load_svd(datasets_path)
@@ -56,12 +68,23 @@ if __name__ == "__main__":
                      "labels": labels_train}
     test_to_dump = {"data": x_test,
                     "labels": labels_test}
-
-    for patient in tqdm(patients_train, desc="Processing the train set..."):
-        x_train.append(get_features(patient, 75, 500, "Hertz"))
+    indices_to_remove = []
+    for idx, patient in enumerate(tqdm(patients_train, desc="Processing the train set...")):
+        features = get_features(patient, 50, 500, "Hertz")
+        if not np.isnan(np.array(features)).any():
+            x_train.append(features)
+        else:
+            indices_to_remove.append(idx)
+    train_to_dump["labels"] = remove_items_by_indices(train_to_dump["labels"], indices_to_remove)
     dump_to_json(train_to_dump, train_file)
 
-    for patient in tqdm(patients_test, desc="Processing the test set..."):
-        x_test.append(get_features(patient, 75, 500, "Hertz"))
+    indices_to_remove = []
+    for idx, patient in enumerate(tqdm(patients_test, desc="Processing the test set...")):
+        features = get_features(patient, 50, 500, "Hertz")
+        if not np.isnan(np.array(features)).any():
+            x_test.append(features)
+        else:
+            indices_to_remove.append(idx)
+    test_to_dump["labels"] = remove_items_by_indices(test_to_dump["labels"], indices_to_remove)
     dump_to_json(test_to_dump, test_file)
 
