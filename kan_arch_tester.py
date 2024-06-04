@@ -27,7 +27,7 @@ def test_acc():
 
 
 results = model.train(dataset, opt="Adam",
-                      steps=10000, batch=64,
+                      steps=20, batch=64,
                       metrics=(train_acc, test_acc),
                       loss_fn=torch.nn.CrossEntropyLoss())
 
