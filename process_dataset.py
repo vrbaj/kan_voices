@@ -46,9 +46,11 @@ def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
     mfcc_var = np.var(mfccs, axis=1)
     delta_mfccs = librosa.feature.delta(mfccs)
     delta_mfcc = np.mean(delta_mfccs, axis=1)
+    delta_mfcc_var = np.var(delta_mfccs, axis=1)
     delta2_mfccs = librosa.feature.delta(mfccs, order=2)
     delta2_mfcc = np.mean(delta2_mfccs, axis=1)
-    return [age, sex, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] + list(mfcc) + list(delta_mfcc) + list(delta2_mfcc) + list(mfcc_var)
+    return ([age, sex, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] +
+            list(mfcc) + list(delta_mfcc) + list(delta2_mfcc) + list(mfcc_var))
 
 def load_svd(datasets_path: Path):
     labels = []
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     discard_time = 0.3
     for idx, patient in enumerate(tqdm(patients_train, desc="Processing the train set...")):
         features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
-        if not np.isnan(np.array(features)).any():
+        if not np.isnan(np.array(features)).any() and features[0] > 16:
             x_train.append(features)
         else:
             indices_to_remove.append(idx)
@@ -107,7 +109,7 @@ if __name__ == "__main__":
     indices_to_remove = []
     for idx, patient in enumerate(tqdm(patients_test, desc="Processing the test set...")):
         features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
-        if not np.isnan(np.array(features)).any():
+        if not np.isnan(np.array(features)).any() and features[0] > 16:
             x_test.append(features)
         else:
             indices_to_remove.append(idx)

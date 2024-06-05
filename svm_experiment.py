@@ -25,7 +25,7 @@ best_conf_matrix = None
 best_c = 0
 best_f1 = 0
 best_specificity = 0
-results_file = "results_var.csv"
+results_file = "results_var17+dmfccvar.csv"
 
 with open(results_file, 'w', newline='') as outcsv:
     writer = csv.writer(outcsv)
@@ -46,7 +46,7 @@ for c, cls_weight in tqdm.tqdm(itertools.product(range(100, 10000, 10), range(10
         with open(results_file, "a", newline="") as f:
             csv_writer = csv.writer(f)
             csv_writer.writerow([c, cls_weight ,acc_score, f1, precision, recall, specificity])
-        if recall > 0.88 and specificity > 0.88:
+        if recall > 0.90 and specificity > 0.90:
             print([c, cls_weight ,acc_score, f1, precision, recall, specificity])
         if specificity > best_specificity:
             best_precision = precision_score(dataset["test_label"], y_pred)
