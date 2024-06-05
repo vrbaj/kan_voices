@@ -22,6 +22,11 @@ def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
     session_id = int(voice_path.name.split("-")[0])
     table = pandas.read_csv(voice_path.parent.parent.parent.joinpath("file_information.csv"))
     age = table[table.sessionid==session_id]["talkerage"].values[0]
+    gender = table[table.sessionid==session_id]["talkersex"].values[0]
+    if gender == "w":
+        sex = 1
+    else:
+        sex = 0
     raw_data = parselmouth.Sound(str(voice_path)) # read raw sound data
     total_duration = raw_data.get_total_duration()
     raw_data = raw_data.extract_part(from_time=discard_samples, to_time=total_duration-0.1, preserve_times=True)
@@ -42,7 +47,7 @@ def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
     delta_mfcc = np.mean(delta_mfccs, axis=1)
     delta2_mfccs = librosa.feature.delta(mfccs, order=2)
     delta2_mfcc = np.mean(delta2_mfccs, axis=1)
-    return [age, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] + list(mfcc) + list(delta_mfcc) + list(delta2_mfcc)
+    return [age, sex, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] + list(mfcc) + list(delta_mfcc) + list(delta2_mfcc)
 
 def load_svd(datasets_path: Path):
     labels = []
