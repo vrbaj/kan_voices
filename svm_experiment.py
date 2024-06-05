@@ -25,6 +25,11 @@ best_conf_matrix = None
 best_c = 0
 best_f1 = 0
 best_specificity = 0
+results_file = "results_var.csv"
+
+with open(results_file, 'w', newline='') as outcsv:
+    writer = csv.writer(outcsv)
+    writer.writerow(["c", "cls_weight", "acc", "f1", "precision", "recall", "specificity"])
 
 for c, cls_weight in tqdm.tqdm(itertools.product(range(100, 10000, 10), range(10, 100, 10))):
         # clf = make_pipeline(SVC(gamma="auto", kernel="rbf", C=c))
@@ -38,9 +43,11 @@ for c, cls_weight in tqdm.tqdm(itertools.product(range(100, 10000, 10), range(10
         recall = recall_score(dataset["test_label"], y_pred)
         tn, fp, fn, tp = confusion_matrix(dataset["test_label"], y_pred).ravel()
         specificity = tn / (tn + fp)
-        with open("results.csv", "a") as f:
+        with open(results_file, "a", newline="") as f:
             csv_writer = csv.writer(f)
             csv_writer.writerow([c, cls_weight ,acc_score, f1, precision, recall, specificity])
+        if recall > 0.88 and specificity > 0.88:
+            print([c, cls_weight ,acc_score, f1, precision, recall, specificity])
         if specificity > best_specificity:
             best_precision = precision_score(dataset["test_label"], y_pred)
             best_recall = recall_score(dataset["test_label"], y_pred)
