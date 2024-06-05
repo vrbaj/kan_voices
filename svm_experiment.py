@@ -4,11 +4,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, precision_score, recall_score, f1_score
 import matplotlib.pyplot as plt
 import seaborn as sns
-from tqdm import tqdm
-from tqdm import contrib
+import tqdm
 import pickle
 import numpy as np
 import csv
+import itertools
 
 
 train_set = pickle.load(open("train_set.pk", "rb"))
@@ -26,7 +26,7 @@ best_c = 0
 best_f1 = 0
 best_specificity = 0
 
-for c, cls_weight in tqdm(contrib.itertools.product(range(100, 10000, 10), range(10, 100, 10))):
+for c, cls_weight in tqdm.tqdm(itertools.product(range(100, 10000, 10), range(10, 100, 10))):
         # clf = make_pipeline(SVC(gamma="auto", kernel="rbf", C=c))
         clf = SVC(gamma="auto", kernel="rbf", C=c, class_weight={0: cls_weight / 10})
         clf.fit(dataset["train_input"], dataset["train_label"])
@@ -53,7 +53,7 @@ for c, cls_weight in tqdm(contrib.itertools.product(range(100, 10000, 10), range
             best_specificity = tn / (tn + fp)
 print(f"Best c: {best_c:1.5f}, best f1: {best_f1}"
       f" acc: {best_acc}, recall: {best_recall},"
-      f" specificity: {best_specificity}")
+      f" specificity: {best_specificity}, cls_weight {cls_weight / 10}")
 print(best_report)
 print(best_conf_matrix)
 # Plot confusion matrix
