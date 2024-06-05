@@ -1,4 +1,6 @@
 import parselmouth
+import pandas
+import librosa
 from parselmouth.praat import call
 from pathlib import Path
 from sklearn.model_selection import train_test_split
@@ -16,8 +18,13 @@ def dump_to_json(data, file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def get_features(voice_path, f0_min, f0_max, unit):
-    raw_data = parselmouth.Sound(str(voice_path))  # read raw sound data
+def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
+    session_id = int(voice_path.name.split("-")[0])
+    table = pandas.read_csv(voice_path.parent.parent.parent.joinpath("file_information.csv"))
+    age = table[table.sessionid==session_id]["talkerage"].values[0]
+    raw_data = parselmouth.Sound(str(voice_path)) # read raw sound data
+    total_duration = raw_data.get_total_duration()
+    raw_data = raw_data.extract_part(from_time=discard_samples, to_time=total_duration-0.1, preserve_times=True)
     pitch = call(raw_data, "To Pitch", 0.0, f0_min, f0_max)
     mean_f0 = call(pitch, "Get mean", 0, 0, unit)
     stdev_f0 = call(pitch, "Get standard deviation", 0, 0, unit)
@@ -26,9 +33,16 @@ def get_features(voice_path, f0_min, f0_max, unit):
     hnr = call(harmonicity, "Get mean", 0, 0)
     local_jitter = call(point_process, "Get jitter (local)", 0, 0, 0.0001, 0.02, 1.3)
     local_shimmer = call([raw_data, point_process], "Get shimmer (local)", 0, 0, 0.0001, 0.02, 1.3, 1.6)
-    mfcc_data = raw_data.to_mfcc(number_of_coefficients=12).to_array()
-    mfcc = np.mean(mfcc_data, axis=1)
-    return [mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] + list(mfcc)
+    # mfcc_data = raw_data.to_mfcc(number_of_coefficients=13).to_array()
+    # mfcc = np.mean(mfcc_data, axis=1)
+    signal, sr = librosa.load(str(voice_path))
+    mfccs = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=20)
+    mfcc = np.mean(mfccs, axis=1)
+    delta_mfccs = librosa.feature.delta(mfccs)
+    delta_mfcc = np.mean(delta_mfccs, axis=1)
+    delta2_mfccs = librosa.feature.delta(mfccs, order=2)
+    delta2_mfcc = np.mean(delta2_mfccs, axis=1)
+    return [age, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] + list(mfcc) + list(delta_mfcc) + list(delta2_mfcc)
 
 def load_svd(datasets_path: Path):
     labels = []
@@ -72,8 +86,9 @@ if __name__ == "__main__":
     test_to_dump = {"data": x_test,
                     "labels": labels_test}
     indices_to_remove = []
+    discard_time = 0.3
     for idx, patient in enumerate(tqdm(patients_train, desc="Processing the train set...")):
-        features = get_features(patient, 50, 500, "Hertz")
+        features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
         if not np.isnan(np.array(features)).any():
             x_train.append(features)
         else:
@@ -85,7 +100,7 @@ if __name__ == "__main__":
 
     indices_to_remove = []
     for idx, patient in enumerate(tqdm(patients_test, desc="Processing the test set...")):
-        features = get_features(patient, 50, 500, "Hertz")
+        features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
         if not np.isnan(np.array(features)).any():
             x_test.append(features)
         else:
