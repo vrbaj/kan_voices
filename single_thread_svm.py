@@ -7,6 +7,7 @@ from sklearn import svm
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
 from pathlib import Path
 import numpy as np
+import tqdm
 
 
 def fit_svm(options):
@@ -23,7 +24,7 @@ def fit_svm(options):
     tn, fp, fn, tp = confusion_matrix(dataset["test_label"], y_pred).ravel()
     specificity = tn / (tn + fp)
 
-    if recall > 0.90 and specificity > 0.90:
+    if recall > 0.83 and specificity > 0.83:
         print([options["c"], options["cls_weight"], acc_score, f1, precision, recall, specificity])
 
     with file_lock:
@@ -52,10 +53,10 @@ if __name__ == "__main__":
 
         with open(results_file, 'w', newline='') as outcsv:
             writer = csv.writer(outcsv)
-            writer.writerow(["c", "cls_weight", "acc", "f1", "precision", "recall", "specificity"])
+            writer.writerow(["options", "acc", "f1", "precision", "recall", "specificity"])
 
         options = {
-            "c": list(range(10, 10000, 10)),
+            "c": [0.01, 0.05 ,0.1, 0.2,0.5, 0.8, 200, 500, 1000, 10000] + [x for x in range(1, 100, 1)],
             "cls_weight": list(range(10, 100, 10)),
             "kernel": ["rbf", "poly"],
             "gamma": ["auto"],
@@ -70,7 +71,7 @@ if __name__ == "__main__":
                 for settings in itertools.product(options["c"], options["cls_weight"], ["poly"], options["gamma"],
                                                   options["degree"]):
                     settings_list.append(settings + (dataset, results_file))
-        for setting in settings_list:
+        for setting in tqdm.tqdm(settings_list):
             fit_svm(setting)
 
 
