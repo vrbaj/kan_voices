@@ -18,10 +18,10 @@ def prepare_classifier(kernel, **kwargs):
 
 
 if __name__ == "__main__":
-    uuid_dir = "b2f80d9a-18ad-4005-b8c9-363245d39a1b"
-    kernel = "poly"
+    uuid_dir = "."
+    kernel = "rbf"
     gamma = "auto"
-    C = 5780
+    C = 10
     cls_weight = 10
     degree = 2
 
