@@ -34,6 +34,9 @@ def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
     total_duration = raw_data.get_total_duration()
     raw_data = raw_data.extract_part(from_time=discard_samples, to_time=total_duration-0.1, preserve_times=True)
     pitch = call(raw_data, "To Pitch", 0.0, f0_min, f0_max)
+    pitch_data = pitch.selected_array['frequency']
+    pitch_data[pitch_data == 0] = np.nan
+    diff_pitch = (max(pitch_data) - min(pitch_data)) / min(pitch_data)
     mean_f0 = call(pitch, "Get mean", 0, 0, unit)
     stdev_f0 = call(pitch, "Get standard deviation", 0, 0, unit)
     harmonicity = call(raw_data, "To Harmonicity (cc)", 0.01, 75, 0.1, 1.0)
@@ -57,7 +60,7 @@ def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
     spectral_flatness = np.mean(librosa.feature.spectral_flatness(y=signal), axis=1)
     spectral_rolloff = np.mean(librosa.feature.spectral_rolloff(y=signal, sr=sr), axis=1)
 
-    return ([session_id, age, sex, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ]   +
+    return ([session_id, age, sex, diff_pitch, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ]   +
             list(mfcc) + list(delta_mfcc) + list(delta2_mfcc)  + list(mfcc_var) + list(spectral_centroid) +
             list(spectral_contrast) + list(spectral_flatness) + list(spectral_rolloff))
 
@@ -114,7 +117,7 @@ if __name__ == "__main__":
     indices_to_remove = []
     discard_time = 0.3
     for idx, patient in enumerate(tqdm(patients_train, desc="Processing the train set...")):
-        features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
+        features = get_features(patient, 75, 600, "Hertz", discard_samples=discard_time)
         if not np.isnan(np.array(features)).any() and features[1] > 16:
             idx_train.append(features[0])
             x_train.append(features[1:])
@@ -127,7 +130,7 @@ if __name__ == "__main__":
 
     indices_to_remove = []
     for idx, patient in enumerate(tqdm(patients_test, desc="Processing the test set...")):
-        features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
+        features = get_features(patient, 75, 600, "Hertz", discard_samples=discard_time)
         if not np.isnan(np.array(features)).any() and features[1] > 16:
             idx_test.append(features[0])
             x_test.append(features[1:])
