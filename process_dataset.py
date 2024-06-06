@@ -52,7 +52,7 @@ def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
     delta_mfcc_var = np.var(delta_mfccs, axis=1)
     delta2_mfccs = librosa.feature.delta(mfccs, order=2)
     delta2_mfcc = np.mean(delta2_mfccs, axis=1)
-    return [session_id, age, sex, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] + list(mfcc) + list(delta_mfcc) + list(delta2_mfcc) + list(mfcc_var) + list(delta_mfcc) + list(delta_mfcc_var)
+    return [session_id, age, sex, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ]  # + list(mfcc) + list(delta_mfcc) + list(delta2_mfcc)  + list(mfcc_var)# + list(delta_mfcc) + list(delta_mfcc_var)
 
 def load_svd(datasets_path: Path):
     labels = []

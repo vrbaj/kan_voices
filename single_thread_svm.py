@@ -42,7 +42,7 @@ if __name__ == "__main__":
         results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
 
         train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "train_set.pk"), "rb"))
-        test_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "train_set.pk"), "rb"))
+        test_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "test_set.pk"), "rb"))
 
         dataset = {"train_input": np.array(train_set["data"]),
                    "test_input": np.array(test_set["data"]),
