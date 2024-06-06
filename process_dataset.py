@@ -8,6 +8,9 @@ from sklearn.preprocessing import MinMaxScaler
 import pickle
 import numpy as np
 from tqdm import tqdm
+import uuid
+import shutil
+from pathlib import Path
 
 
 def dump_to_json(data, file_path):
@@ -49,14 +52,13 @@ def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
     delta_mfcc_var = np.var(delta_mfccs, axis=1)
     delta2_mfccs = librosa.feature.delta(mfccs, order=2)
     delta2_mfcc = np.mean(delta2_mfccs, axis=1)
-    return ([age, sex, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] +
-            list(mfcc) + list(delta_mfcc) + list(delta2_mfcc) + list(mfcc_var))
+    return [session_id, age, sex, mean_f0, stdev_f0, hnr, local_jitter, local_shimmer ] + list(mfcc) + list(delta_mfcc) + list(delta2_mfcc) + list(mfcc_var) + list(delta_mfcc) + list(delta_mfcc_var)
 
 def load_svd(datasets_path: Path):
     labels = []
     file_paths = []
     dir_list = ["saarbruecken_m_n", "saarbruecken_m_p",
-                "saarbruecken_w_n", "saarbruecken_m_p"]
+                "saarbruecken_w_n", "saarbruecken_w_p"]
     for directory in dir_list:
         files = list(datasets_path.joinpath(directory, "export").glob("*.wav"))
         file_paths += files
@@ -64,7 +66,7 @@ def load_svd(datasets_path: Path):
             labels += len(files) * [0]
         else:
             labels += len(files) * [1]
-    return file_paths, labels
+    return file_paths[:10], labels[:10]
 
 
 def remove_items_by_indices(lst, indices):
@@ -84,21 +86,31 @@ if __name__ == "__main__":
                                                                                 labels,
                                                                                 test_size=0.2,
                                                                                 random_state=42)
+    idx_train = []
+    idx_test = []
     x_train = []
     x_test = []
+    uuid_dir = uuid.uuid4()
+    dataset_path = Path(".").joinpath("training_data", str(uuid_dir))
+    dataset_path.mkdir(parents=True)
 
-    train_file = "train_set.pk"
-    test_file = "test_set.pk"
-    train_to_dump = {"data": x_train,
+    train_file = dataset_path.joinpath(f"train_set.pk")
+    test_file = dataset_path.joinpath(f"test_set.pk")
+    set_maker = dataset_path.joinpath(f"set_maker.py")
+    shutil.copy(__file__, set_maker)
+    train_to_dump = {"index": idx_train,
+                     "data": x_train,
                      "labels": labels_train}
-    test_to_dump = {"data": x_test,
+    test_to_dump = {"index": idx_test,
+                    "data": x_test,
                     "labels": labels_test}
     indices_to_remove = []
     discard_time = 0.3
     for idx, patient in enumerate(tqdm(patients_train, desc="Processing the train set...")):
         features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
-        if not np.isnan(np.array(features)).any() and features[0] > 16:
-            x_train.append(features)
+        if not np.isnan(np.array(features)).any() and features[1] > 16:
+            idx_train.append(features[0])
+            x_train.append(features[1:])
         else:
             indices_to_remove.append(idx)
     train_to_dump["data"] = MinMaxScaler().fit_transform(np.array(train_to_dump["data"]))
@@ -109,8 +121,9 @@ if __name__ == "__main__":
     indices_to_remove = []
     for idx, patient in enumerate(tqdm(patients_test, desc="Processing the test set...")):
         features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
-        if not np.isnan(np.array(features)).any() and features[0] > 16:
-            x_test.append(features)
+        if not np.isnan(np.array(features)).any() and features[1] > 16:
+            idx_test.append(features[0])
+            x_test.append(features[1:])
         else:
             indices_to_remove.append(idx)
     test_to_dump["data"] = MinMaxScaler().fit_transform(np.array(test_to_dump["data"]))
