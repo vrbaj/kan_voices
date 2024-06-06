@@ -25,7 +25,7 @@ def fit_svm(options):
     specificity = tn / (tn + fp)
 
     if recall > 0.83 and specificity > 0.83:
-        print([options["c"], options["cls_weight"], acc_score, f1, precision, recall, specificity])
+        print([options[0], options[1], acc_score, f1, precision, recall, specificity])
 
     with file_lock:
         with open(results_file, mode="a", newline="") as csv_file:

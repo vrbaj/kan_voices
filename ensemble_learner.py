@@ -18,9 +18,13 @@ for training_dataset in training_data.iterdir():
                "test_label": np.array(test_set["labels"])}
 
     # Create the base estimators
-    svm_bc = SVC(C=97.3, kernel="rbf", gamma="auto", class_weight="balanced", probability=True)
+    svm_bc = SVC(C=200, kernel="poly", degree=2, gamma="auto", class_weight="balanced", probability=True)
     dt_bc = DecisionTreeClassifier()
-
+    svm_test = SVC(C=200, kernel="poly", degree=2, gamma="auto", class_weight={0: 2.})
+    svm_test.fit(dataset["train_input"], dataset["train_label"])
+    y_test = svm_test.predict(dataset["test_input"])
+    accuracy_bc = accuracy_score(dataset["test_label"], y_test)
+    print(f'Accuracy SVM test: {accuracy_bc}')
     #
     # # Create the voting classifier
     voting_clf_bc = VotingClassifier(estimators=[('svm', svm_bc), ('dt', dt_bc)], voting='soft')
@@ -34,7 +38,3 @@ for training_dataset in training_data.iterdir():
     # Evaluate the accuracy
     accuracy_bc = accuracy_score(dataset["test_label"], y_pred_bc)
     print(f'Accuracy : {accuracy_bc}')
-    print(dataset["test_input"].shape)
-    print(dataset["test_label"].shape)
-    print(dataset["train_input"].shape)
-    print(dataset["train_label"].shape)
