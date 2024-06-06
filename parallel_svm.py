@@ -5,22 +5,14 @@ import pickle
 import csv
 from sklearn import svm
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
-
+from pathlib import Path
 import numpy as np
 
-file_lock = Lock()
-
-train_set = pickle.load(open("train_set.pk", "rb"))
-test_set = pickle.load(open("test_set.pk", "rb"))
-
-dataset = {"train_input": np.array(train_set["data"]),
-            "test_input": np.array(test_set["data"]),
-            "train_label": np.array(train_set["labels"]),
-            "test_label": np.array(test_set["labels"])}
-results_file = "results_var17_parallel.csv"
 
 def fit_svm(options):
-    clf = svm.SVC(gamma="auto", kernel="rbf", C=options[0], class_weight={0: options[1] / 10})
+    dataset = options[5]
+    results_file = options[6]
+    clf = svm.SVC(gamma=options[3], kernel=options[2], C=options[0], class_weight={0: options[1] / 10}, degree=options[4])
     clf.fit(dataset["train_input"], dataset["train_label"])
     y_pred = clf.predict(dataset["test_input"])
 
@@ -37,22 +29,48 @@ def fit_svm(options):
     with file_lock:
         with open(results_file, mode="a", newline="") as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=",")
-            csv_writer.writerow([options[0], options[1], acc_score, f1, precision, recall, specificity])
+            csv_writer.writerow([options[:5], acc_score, f1, precision, recall, specificity])
 
 
-if __name__ == '__main__':
+file_lock = Lock()
+training_data = Path(".").joinpath("training_data")
+results_data = Path(".").joinpath("results")
 
-    with open(results_file, 'w', newline='') as outcsv:
-        writer = csv.writer(outcsv)
-        writer.writerow(["c", "cls_weight", "acc", "f1", "precision", "recall", "specificity"])
 
-    options = {
-        "c": list(range(100, 10000, 10)),
-        "cls_weight": list(range(10, 100, 10))
-    }
-    settings_list = []
-    for settings in itertools.product(*options.values()):
-        settings_list.append(settings)
+if __name__ == "__main__":
+    for training_dataset in training_data.iterdir():
+        results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
 
+        train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "train_set.pk"), "rb"))
+        test_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "train_set.pk"), "rb"))
+
+        dataset = {"train_input": np.array(train_set["data"]),
+                   "test_input": np.array(test_set["data"]),
+                   "train_label": np.array(train_set["labels"]),
+                   "test_label": np.array(test_set["labels"])}
+        results_file = results_data.joinpath(str(training_dataset.name), "results.csv")
+
+        with open(results_file, 'w', newline='') as outcsv:
+            writer = csv.writer(outcsv)
+            writer.writerow(["c", "cls_weight", "acc", "f1", "precision", "recall", "specificity"])
+
+        options = {
+            "c": list(range(10, 10000, 10)),
+            "cls_weight": list(range(10, 100, 10)),
+            "kernel": ["rbf", "poly"],
+            "gamma": ["auto"],
+            "degree": [2, 3, 4, 5]
+        }
+        settings_list = []
+        for kernel in options["kernel"]:
+            if kernel == "rbf":
+                for settings in itertools.product(options["c"], options["cls_weight"], ["rbf"], options["gamma"], [1]):
+                    settings_list.append(settings + (dataset, results_file))
+            else:
+                for settings in itertools.product(options["c"], options["cls_weight"], ["poly"], options["gamma"],
+                                                  options["degree"]):
+                    settings_list.append(settings + (dataset, results_file))
     with Pool(3) as p:
         p.map(fit_svm, settings_list)
+
+
