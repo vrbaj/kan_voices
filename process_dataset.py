@@ -47,7 +47,7 @@ def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
     # mfcc_data = raw_data.to_mfcc(number_of_coefficients=13).to_array()
     # mfcc = np.mean(mfcc_data, axis=1)
     signal, sr = librosa.load(str(voice_path))
-    mfccs = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=20)
+    mfccs = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=13)
     mfcc = np.mean(mfccs, axis=1)
     mfcc_var = np.var(mfccs, axis=1)
     delta_mfccs = librosa.feature.delta(mfccs)
