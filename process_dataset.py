@@ -66,7 +66,7 @@ def load_svd(datasets_path: Path):
             labels += len(files) * [0]
         else:
             labels += len(files) * [1]
-    return file_paths[:10], labels[:10]
+    return file_paths, labels
 
 
 def remove_items_by_indices(lst, indices):
