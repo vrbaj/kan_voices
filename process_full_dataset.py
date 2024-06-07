@@ -118,7 +118,7 @@ if __name__ == "__main__":
             X.append(features[1:])
         else:
             indices_to_remove.append(idx)
-    print(X)
+
     dataset_to_dump["data"] = MinMaxScaler().fit_transform(np.array(dataset_to_dump["data"]))
     print(dataset_to_dump["data"].shape)
     dataset_to_dump["labels"] = remove_items_by_indices(dataset_to_dump["labels"], indices_to_remove)
