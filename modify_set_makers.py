@@ -1,6 +1,6 @@
 from pathlib import Path
 
-set_maker_folder = Path(".").joinpath("evaluated_datasets")
+set_maker_folder = Path(".").joinpath("training_data")
 dst_folder = Path(".")
 for idx, set_maker in enumerate(set_maker_folder.iterdir()):
     text = set_maker.joinpath("set_maker.py").read_text()
