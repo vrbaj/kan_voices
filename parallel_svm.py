@@ -6,7 +6,7 @@ import csv
 from sklearn import svm
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
 from sklearn.metrics import make_scorer
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_validate
 
 from pathlib import Path
 import numpy as np
@@ -19,15 +19,14 @@ def fit_svm(options):
     clf = svm.SVC(gamma=options[3], kernel=options[2],
                   C=options[0], class_weight={0: options[1] / 10},
                   degree=options[4], random_state=42)
-    scores = np.mean(cross_val_score(clf, dataset["X"], dataset["y"], cv=10, scoring=scoring))
+    scores = cross_validate(clf, dataset["X"], dataset["y"], cv=10, scoring=scoring)
     acc_score = np.mean(scores["test_accuracy"])
     f1 = np.mean(scores["test_f1_score"])
     recall = np.mean(scores["test_recall"])
     specificity = np.mean(scores["test_specificity"])
     precision = np.mean(scores["test_precision"])
-    print(scores)
 
-    if recall > 0.90 and specificity > 0.90:
+    if recall > 0.85 and specificity > 0.85:
         print([options, acc_score, f1, precision, recall, specificity])
 
     with file_lock:
@@ -45,13 +44,13 @@ scoring = {
     'precision': make_scorer(precision_score),
     'recall': make_scorer(recall_score),
     'f1_score': make_scorer(f1_score),
-    "specificity": make_scorer(make_scorer(recall_score, pos_label=0)),
+    "specificity": specificity
 }
 if __name__ == "__main__":
     for training_dataset in training_data.iterdir():
         results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
 
-        train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "datasetset.pk"), "rb"))
+        train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "dataset.pk"), "rb"))
 
         dataset = {"X": np.array(train_set["data"]),
                    "y": np.array(train_set["labels"])}
@@ -62,7 +61,7 @@ if __name__ == "__main__":
             writer.writerow(["options", "acc", "f1", "precision", "recall", "specificity"])
 
         options = {
-            "c": list(range(10, 20, 10)),
+            "c": list(range(10, 10000, 10)),
             "cls_weight": list(range(10, 20, 10)),
             "kernel": ["rbf", "poly"],
             "gamma": ["auto"],
