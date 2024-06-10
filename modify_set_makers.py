@@ -21,8 +21,8 @@ for idx, set_maker in enumerate(set_maker_folder.iterdir()):
     # new_file = text.replace("not np.isnan(np.array(features)).any() and", "")
     # new_file = text.replace("discard_samples=discard_time)\n", "discard_samples=discard_time)\n        features = np.nan_to_num(np.array(features), copy=True, nan=0)\n")
     # new_file = text.replace("features = np.nan_to_num(np.array(features), copy=True, nan=0)", "features.append(1 if np.isnan(features).any() else 0)\n        features = np.nan_to_num(np.array(features), copy=True, nan=0)\n")
-    new_file = text.replace("MinMaxScaler", "StandardScaler")
-
+    # new_file = text.replace("MinMaxScaler", "StandardScaler")
+    new_file = text.replace("StandardScaler", "MinMaxScaler")
     with open(dst_folder.joinpath(f"setmaker{idx}.py"), "w") as file:
         file.write(new_file)
     file_paths.append(dst_folder.joinpath(f"setmaker{idx}.py"))
