@@ -7,6 +7,7 @@ from sklearn.metrics import make_scorer
 from sklearn import svm
 from imblearn import over_sampling
 import numpy as np
+from sklearn.model_selection import KFold
 
 
 augmentations = {"SMOTE": over_sampling.SMOTE,
