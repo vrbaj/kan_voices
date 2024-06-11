@@ -126,8 +126,8 @@ if __name__ == "__main__":
                                                   options["degree"]):
                     settings_list.append(settings + (folded_dataset, results_file))
 
-        with Pool(3) as p:
-            # r = list(tqdm.tqdm(p.imap(fit_svm, settings_list), total=len(settings_list)))
-            p.map(fit_svm, settings_list)
+        with Pool(14) as p:
+            r = list(tqdm.tqdm(p.imap(fit_svm, settings_list), total=len(settings_list)))
+            # p.map(fit_svm, settings_list)
         # for setting in tqdm.tqdm(settings_list):
         #     fit_svm(setting)
