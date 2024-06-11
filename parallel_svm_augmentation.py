@@ -27,7 +27,7 @@ def fit_svm(options):
                   C=options[0], class_weight={0: options[1] / 10},
                   degree=options[4], random_state=42)
 
-    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    cv = KFold(n_splits=10, shuffle=True, random_state=42)
     X = dataset["X"]
     y = dataset["y"]
 
@@ -37,8 +37,22 @@ def fit_svm(options):
 
         # Apply data augmentation only to the training data
         smote = KMeansSMOTE()
-        X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
-
+        try:
+            X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
+        except:
+            try:
+                smote = SMOTE()
+                X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
+            except:
+                with file_lock:
+                    with open(results_file, mode="a", newline="") as csv_file:
+                        csv_writer = csv.writer(csv_file, delimiter=",")
+                        csv_writer.writerow([options[:5], np.nan,
+                                             np.nan,
+                                             np.nan,
+                                             np.nan,
+                                             np.nan])
+                    return None
         # Fit the model on the augmented training data
         clf.fit(X_train_res, y_train_res)
 
