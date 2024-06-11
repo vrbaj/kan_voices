@@ -17,7 +17,6 @@ import time
 
 
 def fit_svm(options):
-    start = time.time()
     scores = {"accuracy": [],
               "precision": [],
               "recall": [],
@@ -30,32 +29,11 @@ def fit_svm(options):
                   C=options[0], class_weight={0: options[1] / 10},
                   degree=options[4], random_state=42)
 
-    cv = KFold(n_splits=10, shuffle=True, random_state=42)
-    X = dataset["X"]
-    y = dataset["y"]
+    for fold in dataset:
+        X_train_res, X_test = fold["X_train_res"], fold["X_test"]
+        y_train_res, y_test = fold["y_train_res"], fold["y_test"]
 
-    for train_idx, test_idx in cv.split(X, y):
-        X_train, X_test = X[train_idx], X[test_idx]
-        y_train, y_test = y[train_idx], y[test_idx]
 
-        # Apply data augmentation only to the training data
-        smote = KMeansSMOTE()
-        try:
-            X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
-        except:
-            try:
-                smote = SMOTE()
-                X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
-            except:
-                with file_lock:
-                    with open(results_file, mode="a", newline="") as csv_file:
-                        csv_writer = csv.writer(csv_file, delimiter=",")
-                        csv_writer.writerow([options[:5], np.nan,
-                                             np.nan,
-                                             np.nan,
-                                             np.nan,
-                                             np.nan])
-                    return None
         # Fit the model on the augmented training data
         clf.fit(X_train_res, y_train_res)
 
@@ -74,9 +52,8 @@ def fit_svm(options):
         scores["specificity"].append(specificity)
         scores["f1"].append(f1)
 
-
-    if  np.mean(scores['recall']) > 0.85 and np.mean(scores['specificity']) > 0.835:
-        print([options, np.mean(scores["accuracy"]), np.mean(scores['f1']),
+    if np.mean(scores['recall']) > 0.85 and np.mean(scores['specificity']) > 0.835:
+        print([np.mean(scores["accuracy"]), np.mean(scores['f1']),
                np.mean(scores['precision']), np.mean(scores['recall']),
                np.mean(scores['specificity'])])
 
@@ -89,20 +66,43 @@ def fit_svm(options):
                                  np.mean(scores['recall']),
                                  np.mean(scores['specificity'])])
     stop = time.time()
-    print(f"elapsed time: {stop - start}")
+
+
+
 file_lock = Lock()
 training_data = Path(".").joinpath("training_data")
 results_data = Path(".").joinpath("results")
 
-
 if __name__ == "__main__":
     for training_dataset in sorted(training_data.iterdir()):
         results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
-
+        # load dataset
         train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "dataset.pk"), "rb"))
 
         dataset = {"X": np.array(train_set["data"]),
                    "y": np.array(train_set["labels"])}
+        # create folds
+        cv = KFold(n_splits=10, shuffle=True, random_state=42)
+        X = dataset["X"]
+        y = dataset["y"]
+        folded_dataset = []
+        print("Processing SMOTE shit....")
+        for train_idx, test_idx in cv.split(X, y):
+            X_train, X_test = X[train_idx], X[test_idx]
+            y_train, y_test = y[train_idx], y[test_idx]
+
+            # Apply data augmentation only to the training data
+            smote = KMeansSMOTE()
+            try:
+                X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
+            except:
+                try:
+                    smote = SMOTE()
+                    X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
+                except:
+                    raise
+            folded_dataset.append({"X_train_res": X_train_res, "y_train_res": y_train_res, "X_test": X_test, "y_test": y_test})
+        print("SMOTE shit processed...")
         results_file = results_data.joinpath(str(training_dataset.name), "results.csv")
 
         with open(results_file, 'w', newline='') as outcsv:
@@ -120,14 +120,14 @@ if __name__ == "__main__":
         for kernel in options["kernel"]:
             if kernel == "rbf":
                 for settings in itertools.product(options["c"], options["cls_weight"], ["rbf"], options["gamma"], [1]):
-                    settings_list.append(settings + (dataset, results_file))
+                    settings_list.append(settings + (folded_dataset, results_file))
             else:
                 for settings in itertools.product(options["c"], options["cls_weight"], ["poly"], options["gamma"],
                                                   options["degree"]):
-                    settings_list.append(settings + (dataset, results_file))
+                    settings_list.append(settings + (folded_dataset, results_file))
 
-        with Pool(2) as p:
-            #r = list(tqdm.tqdm(p.imap(fit_svm, settings_list), total=len(settings_list)))
+        with Pool(3) as p:
+            # r = list(tqdm.tqdm(p.imap(fit_svm, settings_list), total=len(settings_list)))
             p.map(fit_svm, settings_list)
         # for setting in tqdm.tqdm(settings_list):
         #     fit_svm(setting)
