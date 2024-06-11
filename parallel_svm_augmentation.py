@@ -72,10 +72,10 @@ def fit_svm(options):
         scores["f1"].append(f1)
 
 
-
-
     if  np.mean(scores['recall']) > 0.85 and np.mean(scores['specificity']) > 0.835:
-        print([options, acc, f1, precision, recall, specificity])
+        print([options, np.mean(scores["accuracy"]), np.mean(scores['f1']),
+               np.mean(scores['precision']), np.mean(scores['recall']),
+               np.mean(scores['specificity'])])
 
     with file_lock:
         with open(results_file, mode="a", newline="") as csv_file:
@@ -93,7 +93,7 @@ results_data = Path(".").joinpath("results")
 
 
 if __name__ == "__main__":
-    for training_dataset in training_data.iterdir():
+    for training_dataset in sorted(training_data.iterdir()):
         results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
 
         train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "dataset.pk"), "rb"))
