@@ -36,12 +36,12 @@ def fit_svm(options):
         y_train, y_test = y[train_idx], y[test_idx]
 
         # Apply data augmentation only to the training data
-        smote = KMeansSMOTE()
+        smote = KMeansSMOTE(n_jobs=14)
         try:
             X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
         except:
             try:
-                smote = SMOTE()
+                smote = SMOTE(n_jobs=14)
                 X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
             except:
                 with file_lock:
@@ -123,6 +123,8 @@ if __name__ == "__main__":
                                                   options["degree"]):
                     settings_list.append(settings + (dataset, results_file))
 
-        with Pool(3) as p:
-            r = list(tqdm.tqdm(p.imap(fit_svm, settings_list), total=len(settings_list)))
-            #p.map(fit_svm, settings_list)
+        # with Pool(1) as p:
+        #     r = list(tqdm.tqdm(p.imap(fit_svm, settings_list), total=len(settings_list)))
+        #     #p.map(fit_svm, settings_list)
+        for setting in tqdm.tqdm(settings_list):
+            fit_svm(setting)
