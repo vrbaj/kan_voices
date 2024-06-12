@@ -27,7 +27,7 @@ def fit_svm(options):
     results_file = options[6]
     clf = svm.SVC(gamma=options[3], kernel=options[2],
                   C=options[0], class_weight={0: options[1] / 10},
-                  degree=options[4], random_state=42, max_iter=5 * 10e6)
+                  degree=options[4], random_state=42, max_iter=int(5 * 10e6))
 
     for fold in dataset:
         X_train_res, X_test = fold["X_train_res"], fold["X_test"]
