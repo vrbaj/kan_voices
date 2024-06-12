@@ -13,7 +13,7 @@ def iterate_csv(file_path):
             for idx, row in enumerate(csv_reader):
                 if len(row) > 1 and idx > 1:
                     if float(row[-1]) > 0.85 and float(row[1]) > 0.8577:
-                        best_makers.append(row[0])
+                        best_makers.append(file_path)
     except Exception as e:
         print(f"An error occurred: {e}")
 
