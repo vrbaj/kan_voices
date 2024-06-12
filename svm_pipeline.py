@@ -78,7 +78,7 @@ if __name__ == "__main__":
         grid_search.fit(dataset["X"], dataset["y"])
         pd.DataFrame(grid_search.cv_results_)[
             ["params", "mean_test_accuracy", "mean_test_recall", "mean_test_specificity"]].to_csv(results_file.joinpath("results.csv"),
-                                                                                                  index=False)
+                                                                                                  index=False, mode="a")
 
 
 
