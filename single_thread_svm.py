@@ -15,6 +15,7 @@ def fit_svm(options):
     results_file = options[6]
     clf = svm.SVC(gamma=options[3], kernel=options[2], C=options[0], class_weight={0: options[1] / 10}, degree=options[4])
     clf.fit(dataset["train_input"], dataset["train_label"])
+    print(f"{np.sum(clf.n_iter_)}")
     y_pred = clf.predict(dataset["test_input"])
 
     acc_score = accuracy_score(dataset["test_label"], y_pred)

@@ -27,7 +27,7 @@ def fit_svm(options):
     results_file = options[6]
     clf = svm.SVC(gamma=options[3], kernel=options[2],
                   C=options[0], class_weight={0: options[1] / 10},
-                  degree=options[4], random_state=42)
+                  degree=options[4], random_state=42, max_iter=5 * 10e6)
 
     for fold in dataset:
         X_train_res, X_test = fold["X_train_res"], fold["X_test"]
@@ -74,7 +74,9 @@ training_data = Path(".").joinpath("training_data")
 results_data = Path(".").joinpath("results")
 
 if __name__ == "__main__":
-    for training_dataset in sorted(training_data.iterdir()):
+    results_path = Path("results").iterdir()
+    to_do = set(training_data.iterdir()) - set(results_path)
+    for training_dataset in sorted(to_do):
         results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
         # load dataset
         train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "dataset.pk"), "rb"))

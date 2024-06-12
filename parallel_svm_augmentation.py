@@ -58,7 +58,7 @@ def fit_svm(options):
                     return None
         # Fit the model on the augmented training data
         clf.fit(X_train_res, y_train_res)
-
+        print(f"{np.sum(clf.n_iter_)}")
         # Predict on the validation data
         y_pred = clf.predict(X_test)
 
@@ -96,7 +96,10 @@ results_data = Path(".").joinpath("results")
 
 
 if __name__ == "__main__":
-    for training_dataset in sorted(training_data.iterdir()):
+    results_path = Path("results").iterdir()
+    to_do = set(training_data.iterdir()) - set(results_path)
+
+    for training_dataset in sorted(to_do):
         results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
 
         train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "dataset.pk"), "rb"))
