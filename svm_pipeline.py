@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
         pipeline = Pipeline([
             ('smote', CustomSMOTE()),
-            ('classifier', SVC())
+            ('classifier', SVC(max_iter=int(1e6)))
         ])
         grid_search = GridSearchCV(pipeline, param_grid_poly, cv=10, scoring=scoring_dict,
                                    n_jobs=-1, refit=False)
