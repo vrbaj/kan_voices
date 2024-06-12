@@ -37,10 +37,15 @@ results_data = Path(".").joinpath("results")
 
 
 param_grid_poly = {
-    "classifier__C": [1],
+    "classifier__C": list(range(1000, 11000, 10)),
     "classifier__kernel": ["poly"],
     "classifier__gamma": ["auto"],
     "classifier__degree": [2, 3, 4, 5]
+}
+param_grid_rbf = {
+    "classifier__C": list(range(10, 10000, 10)),
+    "classifier__kernel": ["rbf"],
+    "classifier__gamma": ["auto"],
 }
 scoring_dict = {"accuracy": make_scorer(accuracy_score),
                 "recall": make_scorer(recall_score),
