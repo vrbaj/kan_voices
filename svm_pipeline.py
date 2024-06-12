@@ -56,7 +56,7 @@ if __name__ == "__main__":
     results_path = Path("results")
     td = [str(x.name) for x in training_data.iterdir()]
     tr = [str(x.name) for x in results_path.iterdir()]
-    to_do = set(td) - set(tr)
+    to_do = training_data.iterdir() #set(td) - set(tr)
     for training_dataset_str in tqdm.tqdm(sorted(to_do)):
         results_file = results_data.joinpath(str(training_dataset_str))
         results_file.mkdir(exist_ok=True)
