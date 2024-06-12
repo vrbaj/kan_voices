@@ -26,7 +26,7 @@ def dump_to_json(data, file_path):
 
 def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
     session_id = int(voice_path.name.split("-")[0])
-    table = pandas.read_csv(voice_path.parent.parent.parent.joinpath("file_information.csv"))
+    table = pandas.read_csv(voice_path.parent.parent.joinpath("file_information.csv"))
     age = table[table.sessionid==session_id]["talkerage"].values[0]
     gender = table[table.sessionid==session_id]["talkersex"].values[0]
     if gender == "w":
@@ -35,7 +35,7 @@ def get_features(voice_path, f0_min, f0_max, unit, discard_samples=0):
         sex = 0
     raw_data = parselmouth.Sound(str(voice_path)) # read raw sound data
     total_duration = raw_data.get_total_duration()
-    raw_data = raw_data.extract_part(from_time=discard_samples, to_time=total_duration-0.1, preserve_times=True)
+    raw_data = raw_data.extract_part(from_time=discard_samples, to_time=total_duration, preserve_times=True)
     pitch = call(raw_data, "To Pitch", 0.0, f0_min, f0_max)
     pitch_data = pitch.selected_array['frequency']
     pitch_data[pitch_data == 0] = np.nan
@@ -73,7 +73,7 @@ def load_svd(datasets_path: Path):
     dir_list = ["saarbruecken_m_n", "saarbruecken_m_p",
                 "saarbruecken_w_n", "saarbruecken_w_p"]
     for directory in dir_list:
-        files = list(datasets_path.joinpath(directory, "export").glob("*.wav"))
+        files = list(datasets_path.joinpath(directory).glob("*.wav"))
         file_paths += files
         if "_n" in directory:
             labels += len(files) * [0]
@@ -93,7 +93,7 @@ def remove_items_by_indices(lst, indices):
 
 
 if __name__ == "__main__":
-    datasets_path = Path(__file__).parent.joinpath("datasets")
+    datasets_path = Path(".").joinpath("trimmed_files")
     file_paths, labels = load_svd(datasets_path)
     idx_dataset = []
     X = []
@@ -109,9 +109,9 @@ if __name__ == "__main__":
                      "labels": labels}
 
     indices_to_remove = []
-    discard_time = 0.3
+    discard_time = 0
     for idx, patient in enumerate(tqdm(file_paths, desc="Processing the train set...")):
-        features = get_features(patient, 75, 600, "Hertz", discard_samples=discard_time)
+        features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
         features.append(1 if np.isnan(features).any() else 0)
         features = np.nan_to_num(np.array(features), copy=True, nan=0)
         if features[1] > 16:
