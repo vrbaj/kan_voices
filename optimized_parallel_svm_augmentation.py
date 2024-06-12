@@ -74,9 +74,13 @@ training_data = Path(".").joinpath("training_data")
 results_data = Path(".").joinpath("results")
 
 if __name__ == "__main__":
-    results_path = Path("results").iterdir()
-    to_do = set(training_data.iterdir()) - set(results_path)
-    for training_dataset in sorted(to_do):
+    results_path = Path("results")
+    td = [str(x.name) for x in training_data.iterdir()]
+    tr = [str(x.name) for x in results_path.iterdir()]
+    to_do = set(td) - set(tr)
+    for training_dataset_str in sorted(to_do):
+        training_dataset = training_data.joinpath(training_dataset_str)
+        print(f"evaluate {training_dataset}")
         results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
         # load dataset
         train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "dataset.pk"), "rb"))
