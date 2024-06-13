@@ -112,6 +112,7 @@ if __name__ == "__main__":
     discard_time = 0
     for idx, patient in enumerate(tqdm(file_paths, desc="Processing the train set...")):
         features = get_features(patient, 50, 500, "Hertz", discard_samples=discard_time)
+        print(features)
         features.append(1 if np.isnan(features).any() else 0)
         features = np.nan_to_num(np.array(features), copy=True, nan=0)
         if features[1] > 16:
