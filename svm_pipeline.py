@@ -40,7 +40,7 @@ param_grid_poly = {
     "classifier__C": list(range(1000, 11000, 10)),
     "classifier__kernel": ["poly"],
     "classifier__gamma": ["auto"],
-    "classifier__degree": [2, 3, 4, 5]
+    "classifier__degree": [6]
 }
 param_grid_rbf = {
     "classifier__C": list(range(10, 10000, 10)),
