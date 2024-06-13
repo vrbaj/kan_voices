@@ -165,7 +165,7 @@ def load_svd(datasets_path: Path):
             labels += len(files) * [0]
         else:
             labels += len(files) * [1]
-    return file_paths[:2], labels[:2]
+    return file_paths, labels
 
 def remove_items_by_indices(lst, indices):
     # Sort the indices in descending order
@@ -228,7 +228,6 @@ if __name__ == "__main__":
             features = get_audio_features(patient, experiment_parameters)
             features.append(1 if np.isnan(features).any() else 0)
             features = np.nan_to_num(np.array(features), copy=True, nan=0)
-            print(features)
             if features[1] > 21 and features[2] == 0:
 
                 idx_dataset.append(features[0])
