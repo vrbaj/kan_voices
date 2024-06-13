@@ -37,6 +37,7 @@ class AudioFeaturesParams:
     spectral_contrast: Optional[bool] = True
     spectral_flatness: Optional[bool] = True
     spectral_rolloff: Optional[bool] = True
+    zero_crossing_rate: Optional[bool] = True
 
 
 def dataclass_to_json(dataclass_instance, file_path: Path):
@@ -147,6 +148,9 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         spectral_rolloff = np.mean(librosa.feature.spectral_rolloff(y=signal, sr=sr), axis=1)
         feature_list = feature_list + list(spectral_rolloff)
 
+    if params.zero_crossing_rate:
+        zero_crossing = np.mean(librosa.feature.zero_crossing_rate(y=signal)[0])
+        feature_list.append(zero_crossing)
     return feature_list
 
 def load_svd(datasets_path: Path):
@@ -161,7 +165,7 @@ def load_svd(datasets_path: Path):
             labels += len(files) * [0]
         else:
             labels += len(files) * [1]
-    return file_paths, labels
+    return file_paths[:2], labels[:2]
 
 def remove_items_by_indices(lst, indices):
     # Sort the indices in descending order
@@ -199,7 +203,8 @@ if __name__ == "__main__":
             spectral_centroid=centroid,
             spectral_contrast=contrast,
             spectral_flatness=flatness,
-            spectral_rolloff=rolloff
+            spectral_rolloff=rolloff,
+            zero_crossing_rate=True
         )
 
         datasets_path = Path(".").joinpath("trimmed_files")
@@ -223,6 +228,7 @@ if __name__ == "__main__":
             features = get_audio_features(patient, experiment_parameters)
             features.append(1 if np.isnan(features).any() else 0)
             features = np.nan_to_num(np.array(features), copy=True, nan=0)
+            print(features)
             if features[1] > 21 and features[2] == 0:
 
                 idx_dataset.append(features[0])
