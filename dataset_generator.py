@@ -10,6 +10,7 @@ from typing import Optional
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import parselmouth
+import formantfeatures as ff
 from parselmouth.praat import call
 import numpy as np
 import librosa
@@ -37,7 +38,8 @@ class AudioFeaturesParams:
     spectral_contrast: Optional[bool] = True
     spectral_flatness: Optional[bool] = True
     spectral_rolloff: Optional[bool] = True
-    zero_crossing_rate: Optional[bool] = True
+    zero_crossing_rate: Optional[bool] = False
+    formants: Optional[bool] = True
 
 
 def dataclass_to_json(dataclass_instance, file_path: Path):
@@ -151,6 +153,28 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
     if params.zero_crossing_rate:
         zero_crossing = np.mean(librosa.feature.zero_crossing_rate(y=signal)[0])
         feature_list.append(zero_crossing)
+
+    if params.formants:
+        window_step = 0.010
+        window_length = 0.025
+        emphasize_ratio = 0.65
+        f0_min = 30
+        f0_max = 4000
+        max_frames = 500
+        max_formants = 3
+        formants_features, frame_count, signal_length, trimmed_length = ff.Extract_wav_file_formants(str(voice_path),
+                                                                                                     window_length,
+                                                                                                     window_step,
+                                                                                                     emphasize_ratio,
+                                                                                                     norm=0,
+                                                                                                     f0_min=f0_min,
+                                                                                                     f0_max=f0_max,
+                                                                                                     max_frames=max_frames,
+                                                                                                     formants=max_formants)
+
+        for formant in range(max_formants):
+            features.append(np.mean(formants_features[0:frame_count, (formant * 4) + 0]))
+
     return feature_list
 
 def load_svd(datasets_path: Path):
@@ -204,7 +228,8 @@ if __name__ == "__main__":
             spectral_contrast=contrast,
             spectral_flatness=flatness,
             spectral_rolloff=rolloff,
-            zero_crossing_rate=True
+            zero_crossing_rate=False,
+            formants=True
         )
 
         datasets_path = Path(".").joinpath("trimmed_files")
