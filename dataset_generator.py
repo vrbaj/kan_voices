@@ -173,7 +173,7 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
                                                                                                      formants=max_formants)
 
         for formant in range(max_formants):
-            features.append(np.mean(formants_features[0:frame_count, (formant * 4) + 0]))
+            feature_list.append(np.mean(formants_features[0:frame_count, (formant * 4) + 0]))
 
     return feature_list
 
