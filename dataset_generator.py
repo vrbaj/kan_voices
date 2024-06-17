@@ -12,6 +12,7 @@ from sklearn.preprocessing import MinMaxScaler
 import parselmouth
 import formantfeatures as ff
 from parselmouth.praat import call
+import spkit as sp
 import numpy as np
 import librosa
 from tqdm import tqdm
@@ -39,7 +40,8 @@ class AudioFeaturesParams:
     spectral_flatness: Optional[bool] = True
     spectral_rolloff: Optional[bool] = True
     zero_crossing_rate: Optional[bool] = False
-    formants: Optional[bool] = True
+    formants: Optional[bool] = False
+    shannon: Optional[bool] = True
 
 
 def dataclass_to_json(dataclass_instance, file_path: Path):
@@ -175,6 +177,9 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         for formant in range(max_formants):
             feature_list.append(np.mean(formants_features[0:frame_count, (formant * 4) + 0]))
 
+    if params.shannon:
+        shannon_entropy = sp.entropy(signal, alpha=1)
+        feature_list.append(shannon_entropy)
     return feature_list
 
 def load_svd(datasets_path: Path):
@@ -229,7 +234,8 @@ if __name__ == "__main__":
             spectral_flatness=flatness,
             spectral_rolloff=rolloff,
             zero_crossing_rate=False,
-            formants=True
+            formants=False,
+            shannon=True
         )
 
         datasets_path = Path(".").joinpath("trimmed_files")
