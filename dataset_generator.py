@@ -191,7 +191,7 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         SPEECH_WAVEFORM, SAMPLE_RATE = torchaudio.load(voice_path)
         lfcc_transform = T.LFCC(
             sample_rate=SAMPLE_RATE,
-            n_lfcc=params.mfcc,
+            n_lfcc=20,
             speckwargs={
                 "n_fft": 2048,
                 "win_length": None,
