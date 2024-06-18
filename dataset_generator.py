@@ -15,6 +15,7 @@ from parselmouth.praat import call
 import spkit as sp
 import numpy as np
 import librosa
+
 from tqdm import tqdm
 
 @dataclass
@@ -42,6 +43,7 @@ class AudioFeaturesParams:
     zero_crossing_rate: Optional[bool] = False
     formants: Optional[bool] = False
     shannon: Optional[bool] = True
+    cqcc: Optional[bool] = True
 
 
 def dataclass_to_json(dataclass_instance, file_path: Path):
@@ -180,6 +182,7 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
     if params.shannon:
         shannon_entropy = sp.entropy(signal, alpha=1)
         feature_list.append(shannon_entropy)
+
     return feature_list
 
 def load_svd(datasets_path: Path):
@@ -227,7 +230,9 @@ if __name__ == "__main__":
             jitter=True,
             shimmer=True,
             mfcc=13,
+            var_mfcc=True,
             delta_mfcc=True,
+            var_delta_mfcc=True,
             delta2_mfcc=True,
             spectral_centroid=centroid,
             spectral_contrast=contrast,
