@@ -12,6 +12,9 @@ from sklearn.preprocessing import MinMaxScaler
 import parselmouth
 import formantfeatures as ff
 from parselmouth.praat import call
+import torchaudio.transforms as T
+import torchaudio
+import torch
 import spkit as sp
 import numpy as np
 import librosa
@@ -43,7 +46,7 @@ class AudioFeaturesParams:
     zero_crossing_rate: Optional[bool] = False
     formants: Optional[bool] = False
     shannon: Optional[bool] = True
-    cqcc: Optional[bool] = True
+    lfcc: Optional[bool] = True
 
 
 def dataclass_to_json(dataclass_instance, file_path: Path):
@@ -183,6 +186,22 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         shannon_entropy = sp.entropy(signal, alpha=1)
         feature_list.append(shannon_entropy)
 
+    if params.lfcc:
+
+        SPEECH_WAVEFORM, SAMPLE_RATE = torchaudio.load(voice_path)
+        lfcc_transform = T.LFCC(
+            sample_rate=SAMPLE_RATE,
+            n_lfcc=params.mfcc,
+            speckwargs={
+                "n_fft": 2048,
+                "win_length": None,
+                "hop_length": 512,
+            },
+        )
+        lfccs = lfcc_transform(SPEECH_WAVEFORM)
+        lfcc = torch.mean(lfccs, dim=2)[0]
+        feature_list = feature_list + list(lfcc)
+
     return feature_list
 
 def load_svd(datasets_path: Path):
@@ -240,7 +259,8 @@ if __name__ == "__main__":
             spectral_rolloff=rolloff,
             zero_crossing_rate=False,
             formants=False,
-            shannon=True
+            shannon=True,
+            lfcc=True
         )
 
         datasets_path = Path(".").joinpath("trimmed_files")
