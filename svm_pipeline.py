@@ -26,11 +26,13 @@ class CustomSMOTE(BaseSampler):
         self.smote = SMOTE(**self.smote_args)
 
     def _fit_resample(self, X, y):
-        try:
-            X_res, y_res = self.kmeans_smote.fit_resample(X, y)
-        except Exception as e:
-            X_res, y_res = self.smote.fit_resample(X, y)
-        return X_res, y_res
+        resample_try = 0
+        while resample_try < 10:
+            try:
+                X_res, y_res = self.kmeans_smote.fit_resample(X, y)
+            except Exception as e:
+                X_res, y_res = self.smote.fit_resample(X, y)
+            return X_res, y_res
 
 training_data = Path(".").joinpath("training_data")
 results_data = Path(".").joinpath("results")
