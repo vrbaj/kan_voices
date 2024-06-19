@@ -18,6 +18,7 @@ import torch
 import spkit as sp
 import numpy as np
 import librosa
+from scipy.stats import skew
 
 from tqdm import tqdm
 
@@ -47,7 +48,7 @@ class AudioFeaturesParams:
     formants: Optional[bool] = False
     shannon: Optional[bool] = True
     lfcc: Optional[bool] = True
-    sample_entropy: Optional[bool] = True
+    skew: Optional[bool] = True
 
 
 def dataclass_to_json(dataclass_instance, file_path: Path):
@@ -205,11 +206,9 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         lfcc = torch.mean(lfccs, dim=2)[0]
         feature_list = feature_list + list(lfcc)
 
-    if params.sample_entropy:
-        r = 0.2 * np.std(signal)
-        sample_entropy = sp.entropy_sample(signal, 2, r)
-        feature_list.append(sample_entropy)
+    if params.skew:
 
+        feature_list.append(skew(signal))
     return feature_list
 
 def load_svd(datasets_path: Path):
@@ -269,7 +268,7 @@ if __name__ == "__main__":
             formants=False,
             shannon=True,
             lfcc=True,
-            sample_entropy=True
+            skew=True
         )
 
         datasets_path = Path(".").joinpath("trimmed_files")
