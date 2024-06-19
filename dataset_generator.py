@@ -206,7 +206,7 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         feature_list = feature_list + list(lfcc)
 
     if params.sample_entropy:
-        r = np.std(signal)
+        r = 0.2 * np.std(signal)
         sample_entropy = sp.entropy_sample(signal, 2, r)
         feature_list.append(sample_entropy)
 
