@@ -47,6 +47,7 @@ class AudioFeaturesParams:
     formants: Optional[bool] = False
     shannon: Optional[bool] = True
     lfcc: Optional[bool] = True
+    sample_entropy: Optional[bool] = True
 
 
 def dataclass_to_json(dataclass_instance, file_path: Path):
@@ -191,7 +192,7 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         SPEECH_WAVEFORM, SAMPLE_RATE = torchaudio.load(voice_path)
         lfcc_transform = T.LFCC(
             sample_rate=SAMPLE_RATE,
-            n_lfcc=20,
+            n_lfcc=13,
             speckwargs={
                 "n_fft": 2048,
                 "win_length": None,
@@ -201,6 +202,11 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         lfccs = lfcc_transform(SPEECH_WAVEFORM)
         lfcc = torch.mean(lfccs, dim=2)[0]
         feature_list = feature_list + list(lfcc)
+
+    if params.sample_entropy:
+        r = np.std(signal)
+        sample_entropy = sp.entropy_sample(signal, 2, r)
+        feature_list.append(sample_entropy)
 
     return feature_list
 
@@ -260,7 +266,8 @@ if __name__ == "__main__":
             zero_crossing_rate=False,
             formants=False,
             shannon=True,
-            lfcc=True
+            lfcc=True,
+            sample_entropy=True
         )
 
         datasets_path = Path(".").joinpath("trimmed_files")
