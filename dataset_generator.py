@@ -72,9 +72,6 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
     table = pd.read_csv(voice_path.parent.parent.joinpath("file_information.csv"))
     feature_list = [session_id]
 
-    if params.age:
-        age = table[table.sessionid == session_id]["talkerage"].values[0]
-        feature_list.append(age)
 
     if params.gender:
         gender = table[table.sessionid==session_id]["talkersex"].values[0]
@@ -83,6 +80,11 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         else:
             sex = 0
         feature_list.append(sex)
+
+    if params.age:
+        age = table[table.sessionid == session_id]["talkerage"].values[0]
+        feature_list.append(age)
+
 
     raw_data = parselmouth.Sound(str(voice_path)) # read raw sound data
     pitch = call(raw_data, "To Pitch", 0.0, params.f0_min, params.f0_max)
@@ -291,10 +293,10 @@ if __name__ == "__main__":
             features = get_audio_features(patient, experiment_parameters)
             features.append(1 if np.isnan(features).any() else 0)
             features = np.nan_to_num(np.array(features), copy=True, nan=0)
-            if features[1] > 21 and features[2] == 0:
+            if features[2] > 21 and features[1] == 0:
 
                 idx_dataset.append(features[0])
-                X.append(features[1:])
+                X.append(features[2:])
             else:
                 indices_to_remove.append(idx)
 
