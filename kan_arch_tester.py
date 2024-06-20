@@ -3,31 +3,37 @@ import torch
 import numpy as np
 import pickle
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
 
-train_set = pickle.load(open("train_set.pk", "rb"))
-test_set = pickle.load(open("test_set.pk", "rb"))
+dataset_file = pickle.load(open("training_data/7a197513-8087-4d7b-8191-6971657068a4/dataset.pk", "rb"))
+
+X = torch.from_numpy(np.array(dataset_file["data"]))
+y = torch.from_numpy(np.array(dataset_file["labels"]))
+
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.1, random_state=42)
+
 
 dataset = {}
-dataset["train_input"] = torch.from_numpy(np.array(train_set["data"]))
-dataset["test_input"] = torch.from_numpy(np.array(test_set["data"]))
-dataset["train_label"] = torch.from_numpy(np.array(train_set["labels"]))
-dataset["test_label"] = torch.from_numpy(np.array(test_set["labels"]))
-dataset["train_label"] = dataset["train_label"].type(torch.LongTensor)
-dataset["test_label"] = dataset["test_label"].type(torch.LongTensor)
+dataset["train_input"] = X_train
+dataset["train_label"] = y_train.type(torch.LongTensor)
+dataset["test_input"] = X_test
+dataset["test_label"] = y_test.type(torch.LongTensor)
 
-model = KAN(width=[18, 18, 2], grid=3, k=3)
+model = KAN(width=[98, 98, 98, 2], grid=5, k=3)
 
 
 def train_acc():
-    return torch.mean((torch.argmax(model(dataset['train_input']), dim=1) == dataset['train_label']).float())
+    return torch.mean((torch.argmax(model(dataset["train_input"]), dim=1) == dataset["train_label"]).float())
 
 
 def test_acc():
-    return torch.mean((torch.argmax(model(dataset['test_input']), dim=1) == dataset['test_label']).float())
+    return torch.mean((torch.argmax(model(dataset["test_input"]), dim=1) == dataset["test_label"]).float())
 
 
-results = model.train(dataset, opt="Adam",
-                      steps=20, batch=64,
+results = model.train(dataset, opt="LBFGS",
+                      steps=20, batch=64, lamb=0.01,
                       metrics=(train_acc, test_acc),
                       loss_fn=torch.nn.CrossEntropyLoss())
 

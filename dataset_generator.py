@@ -68,7 +68,7 @@ def dump_to_pickle(data, file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
+def get_audio_features(voice_path: Path, params: AudioFeaturesParams, sex_of_interest: int) -> list:
     session_id = int(voice_path.name.split("-")[0])
     table = pd.read_csv(voice_path.parent.parent.joinpath("file_information.csv"))
     feature_list = [session_id]
@@ -86,6 +86,8 @@ def get_audio_features(voice_path: Path, params: AudioFeaturesParams) -> list:
         age = table[table.sessionid == session_id]["talkerage"].values[0]
         feature_list.append(age)
 
+    if sex_of_interest != sex:
+        return feature_list
 
     raw_data = parselmouth.Sound(str(voice_path)) # read raw sound data
     pitch = call(raw_data, "To Pitch", 0.0, params.f0_min, params.f0_max)
@@ -235,12 +237,13 @@ def remove_items_by_indices(lst, indices):
     return lst
 
 if __name__ == "__main__":
-    diff_pitch = [True, False]
-    stdev_f0 = [True, False]
-    spectral_centroid = [True, False]
-    spectral_contrast = [True, False]
-    spectral_flatness = [True, False]
-    spectral_rolloff = [True, False]
+    sex_of_interest = 0
+    diff_pitch = [True]
+    stdev_f0 = [True]
+    spectral_centroid = [True]
+    spectral_contrast = [True]
+    spectral_flatness = [True]
+    spectral_rolloff = [True]
 
     for diff, stdev, centroid, contrast, flatness, rolloff in itertools.product(diff_pitch, stdev_f0, spectral_centroid, spectral_contrast, spectral_flatness, spectral_rolloff):
 
@@ -289,10 +292,10 @@ if __name__ == "__main__":
         indices_to_remove = []
         discard_time = 0
         for idx, patient in enumerate(tqdm(file_paths, desc="Processing the train set...")):
-            features = get_audio_features(patient, experiment_parameters)
+            features = get_audio_features(patient, experiment_parameters, sex_of_interest)
             features.append(1 if np.isnan(features).any() else 0)
             features = np.nan_to_num(np.array(features), copy=True, nan=0)
-            if features[2] > 20 and features[1] == 0:
+            if features[2] > 20 and features[1] == sex_of_interest:
 
                 idx_dataset.append(features[0])
                 X.append(features[2:])
