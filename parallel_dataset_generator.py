@@ -104,5 +104,5 @@ if __name__ == "__main__":
     while configurations:
         print(f"chunks {processed} / {chunks - 1}")
         chunk, configurations = configurations[:chunk_size], configurations[chunk_size:]
-        r = process_map(create_dataset, chunk, max_workers=22)
+        r = process_map(create_dataset, chunk, max_workers=11)
         processed += 1

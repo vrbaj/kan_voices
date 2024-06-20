@@ -55,7 +55,7 @@ def dataclass_to_json(dataclass_instance, file_path: Path):
     """Convert a dataclass instance to a JSON string."""
     dataclass_dict = asdict(dataclass_instance)
     json_str = json.dumps(dataclass_dict, indent=4)
-    print(f"json file_path {file_path}")
+    #print(f"json file_path {file_path}")
     with file_path.open("w") as f:
         f.write(json_str)
 
@@ -64,7 +64,7 @@ def dump_to_pickle(data, file_path):
     try:
         with open(file_path, 'wb') as pickle_file:
             pickle.dump(data, pickle_file)
-        print(f"Data successfully dumped to {file_path}")
+        #print(f"Data successfully dumped to {file_path}")
     except Exception as e:
         print(f"An error occurred: {e}")
 
