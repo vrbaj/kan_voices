@@ -292,7 +292,7 @@ if __name__ == "__main__":
             features = get_audio_features(patient, experiment_parameters)
             features.append(1 if np.isnan(features).any() else 0)
             features = np.nan_to_num(np.array(features), copy=True, nan=0)
-            if features[2] > 21 and features[1] == 0:
+            if features[2] > 20 and features[1] == 0:
 
                 idx_dataset.append(features[0])
                 X.append(features[2:])
