@@ -30,9 +30,12 @@ class CustomSMOTE(BaseSampler):
         while resample_try < 10:
             try:
                 X_res, y_res = self.kmeans_smote.fit_resample(X, y)
+                return X_res, y_res
             except Exception as e:
-                X_res, y_res = self.smote.fit_resample(X, y)
-            return X_res, y_res
+                resample_try += 1
+        X_res, y_res = self.smote.fit_resample(X, y)
+        return X_res, y_res
+
 
 training_data = Path(".").joinpath("training_data")
 results_data = Path(".").joinpath("results")
