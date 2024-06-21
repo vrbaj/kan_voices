@@ -167,7 +167,7 @@ def get_svd_paths(datasets_path: Path) -> list:
 
 if __name__ == "__main__":
     wav_data_path = Path(".", "trimmed_files")
-    file_paths, labels = get_svd_paths(wav_data_path)
+    file_paths = get_svd_paths(wav_data_path)
     data_to_dump = []
     for idx, patient in enumerate(tqdm(file_paths, desc="Extracting features...")):
         patient_features = extract_features(patient)
