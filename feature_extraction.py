@@ -54,69 +54,90 @@ def extract_features(voice_path: Path) -> dict:
     age = table[table.sessionid == session_id]["talkerage"].values[0]
     features["age"] = age
 
-    raw_data = parselmouth.Sound(str(voice_path))  # read raw sound data
+    # read raw sound data (librosa and parselmouth)
+    raw_data = parselmouth.Sound(str(voice_path))
     pitch = call(raw_data, "To Pitch", 0.0, 50, 500)
     point_process = call(raw_data, "To PointProcess (periodic, cc)", 50, 500)
     signal, sr = librosa.load(str(voice_path))
 
+    # estimate pitch
     pitch_data = pitch.selected_array['frequency']
     pitch_data[pitch_data == 0] = np.nan
+
+    # pitch difference feature
     diff_pitch = (max(pitch_data) - min(pitch_data)) / min(pitch_data)
     features["diff_pitch"] = diff_pitch
 
+    # get mean_f0 feature
     mean_f0 = call(pitch, "Get mean", 0, 0, "Hertz")
     features["mean_f0"] = mean_f0
 
+    # standard deviation of mean_f0
     stdev_f0 = call(pitch, "Get standard deviation", 0, 0, "Hertz")
     features["stdev_f0"] = stdev_f0
 
+    # hnr feature
     harmonicity = call(raw_data, "To Harmonicity (cc)", 0.01, 75, 0.1, 1.0)
     hnr = call(harmonicity, "Get mean", 0, 0)
     features["hnr"] = hnr
 
+    # jitter
     local_jitter = call(point_process, "Get jitter (local)", 0, 0, 0.0001, 0.02, 1.3)
     features["jitter"] = local_jitter
 
+    #shimmer
     local_shimmer = call([raw_data, point_process],
                          "Get shimmer (local)", 0, 0, 0.0001, 0.02, 1.3, 1.6)
     features["shimmer"] = local_shimmer
 
+    # 30 mfcc
     mfccs = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=30)
     mfcc = np.mean(mfccs, axis=1)
     features["mfcc"] = mfcc.tolist()
 
+    # mfcc variance feature
     mfcc_var = np.var(mfccs, axis=1)
     features["var_mfcc"] = mfcc_var.tolist()
 
+    # delta mfcc feature
     delta_mfccs = librosa.feature.delta(mfccs)
     delta_mfcc = np.mean(delta_mfccs, axis=1)
     features["delta_mfcc"] = delta_mfcc.tolist()
 
+    # variance of delta mfcc feature
     delta_mfcc_var = np.var(delta_mfccs, axis=1)
     features["var_delta_mfcc"] = delta_mfcc_var.tolist()
 
+    # delta2 mfcc feature
     delta2_mfccs = librosa.feature.delta(mfccs, order=2)
     delta2_mfcc = np.mean(delta2_mfccs, axis=1)
     features["delta2_mfcc"] = delta2_mfcc.tolist()
 
+    # variance of delta2 mfcc feature
     delta2_mfcc_var = np.var(delta2_mfccs, axis=1)
     features["var_delta2_mfcc"] = delta2_mfcc_var.tolist()
 
+    # spectral centroid feature
     spectral_centroid = np.mean(librosa.feature.spectral_centroid(y=signal, sr=sr), axis=1)
     features["spectral_centroid"] = spectral_centroid[0]
 
+    # spectral contrast feature
     spectral_contrast = np.mean(librosa.feature.spectral_contrast(y=signal, sr=sr), axis=1)
     features["spectral_contrast"] = spectral_contrast.tolist()
 
+    # spectral flatness feature
     spectral_flatness = np.mean(librosa.feature.spectral_flatness(y=signal), axis=1)
     features["spectral_flatness"] = spectral_flatness[0]
 
+    # spectral roll-off feature
     spectral_rolloff = np.mean(librosa.feature.spectral_rolloff(y=signal, sr=sr), axis=1)
     features["spectral_rolloff"] = spectral_rolloff[0]
 
+    # zero crossing rate feature
     zero_crossing = np.mean(librosa.feature.zero_crossing_rate(y=signal)[0])
     features["zero_crossing_rate"] = zero_crossing
 
+    # 3 formants feature
     max_formants = 3
     formants_features, frame_count, _, _ = ff.Extract_wav_file_formants(
         str(voice_path), window_length=0.025, window_step=0.010,
@@ -128,9 +149,11 @@ def extract_features(voice_path: Path) -> dict:
         formants_list.append(np.mean(formants_features[0:frame_count, (formant * 4) + 0]))
     features["formants"] = formants_list
 
+    # shannon entropy feature
     shannon_entropy = sp.entropy(signal, alpha=1)
     features["shannon_entropy"] = shannon_entropy
 
+    # 20 lfcc
     speech_waveform, sample_rate = torchaudio.load(voice_path)
     lfcc_transform = transform.LFCC(
         sample_rate=sample_rate,
@@ -145,6 +168,7 @@ def extract_features(voice_path: Path) -> dict:
     lfcc = torch.mean(lfccs, dim=2)[0]
     features["lfcc"] = [tensor.item() for tensor in lfcc]
 
+    # raw signal skewness feature
     features["skewness"] = skew(signal)
     return features
 
