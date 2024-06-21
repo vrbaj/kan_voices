@@ -1,24 +1,46 @@
-from pathlib import Path
+"""
+Feature extraction module.
+Run python feature_extraction.py to create features.csv file,
+that contains features of all patients and associated label (0 healthy, 1 diagnosis).
+"""
 import csv
+from pathlib import Path
 
-import pandas as pd
-from tqdm import tqdm
 import parselmouth
-from parselmouth.praat import call
 import librosa
+import pandas as pd
+import torch
+import torchaudio
 import numpy as np
 import spkit as sp
 import formantfeatures as ff
-import torch
-import torchaudio
-from torchaudio import transforms as T
+from tqdm import tqdm
+from parselmouth.praat import call
+from torchaudio import transforms as transform
 from scipy.stats import skew
 
-def extract_features(voice_path):
+
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-statements
+
+
+def extract_features(voice_path: Path) -> dict:
+    """
+    Feature extraction for single patient.
+    :param Path voice_path:
+    :return: dict with all utilized features
+    """
     session_id = int(voice_path.name.split("-")[0])
     table = pd.read_csv(voice_path.parent.parent.joinpath("file_information.csv"))
-    features = {}
-    features["session_id"] = session_id
+    features = {"session_id": session_id}
+
+    # label
+    if "_n" in str(voice_path.parent):
+        label = 0
+    else:
+        label = 1
+    features["diagnosis"] = label
 
     # gender of the patient
     gender = table[table.sessionid == session_id]["talkersex"].values[0]
@@ -27,7 +49,6 @@ def extract_features(voice_path):
     else:
         sex = 0
     features["gender"] = sex
-
 
     # age of the patient
     age = table[table.sessionid == session_id]["talkerage"].values[0]
@@ -91,26 +112,16 @@ def extract_features(voice_path):
     features["spectral_flatness"] = spectral_flatness[0]
 
     spectral_rolloff = np.mean(librosa.feature.spectral_rolloff(y=signal, sr=sr), axis=1)
-    features["spectral_folloff"] = spectral_rolloff[0]
+    features["spectral_rolloff"] = spectral_rolloff[0]
 
     zero_crossing = np.mean(librosa.feature.zero_crossing_rate(y=signal)[0])
     features["zero_crossing_rate"] = zero_crossing
 
-    window_step = 0.010
-    window_length = 0.025
-    emphasize_ratio = 0.65
-    formants_f0_min = 30
-    formants_f0_max = 4000
-    max_frames = 500
     max_formants = 3
-    formants_features, frame_count, _, _ = ff.Extract_wav_file_formants(str(voice_path), window_length,
-                                                                                                 window_step,
-                                                                                                 emphasize_ratio,
-                                                                                                 norm=0,
-                                                                                                 f0_min=formants_f0_min,
-                                                                                                 f0_max=formants_f0_max,
-                                                                                                 max_frames=max_frames,
-                                                                                                 formants=max_formants)
+    formants_features, frame_count, _, _ = ff.Extract_wav_file_formants(
+        str(voice_path), window_length=0.025, window_step=0.010,
+        emphasize_ratio=0.65, norm=0, f0_min=30, f0_max=4000, max_frames=500,
+        formants=max_formants)
 
     formants_list = []
     for formant in range(max_formants):
@@ -120,10 +131,9 @@ def extract_features(voice_path):
     shannon_entropy = sp.entropy(signal, alpha=1)
     features["shannon_entropy"] = shannon_entropy
 
-
-    SPEECH_WAVEFORM, SAMPLE_RATE = torchaudio.load(voice_path)
-    lfcc_transform = T.LFCC(
-        sample_rate=SAMPLE_RATE,
+    speech_waveform, sample_rate = torchaudio.load(voice_path)
+    lfcc_transform = transform.LFCC(
+        sample_rate=sample_rate,
         n_lfcc=20,
         speckwargs={
             "n_fft": 2048,
@@ -131,39 +141,40 @@ def extract_features(voice_path):
             "hop_length": 512,
         },
     )
-    lfccs = lfcc_transform(SPEECH_WAVEFORM)
+    lfccs = lfcc_transform(speech_waveform)
     lfcc = torch.mean(lfccs, dim=2)[0]
     features["lfcc"] = [tensor.item() for tensor in lfcc]
 
     features["skewness"] = skew(signal)
     return features
 
-def load_svd(datasets_path: Path):
-    labels = []
-    file_paths = []
+
+def get_svd_paths(datasets_path: Path) -> list:
+    """
+    Get list of all svd wav files paths
+    :param Path datasets_path: path to trimmed svd dataset
+    :return: list of paths to wav trimmed wav files
+    """
+    svd_wav_paths = []
+    # hardcoded to keep consistency of datasets across processing
     dir_list = ["saarbruecken_m_n", "saarbruecken_m_p",
                 "saarbruecken_w_n", "saarbruecken_w_p"]
     for directory in dir_list:
         files = list(datasets_path.joinpath(directory).glob("*.wav"))
-        file_paths += files
-        if "_n" in directory:
-            labels += len(files) * [0]
-        else:
-            labels += len(files) * [1]
-    return file_paths, labels
+        svd_wav_paths += files
+    return svd_wav_paths
 
 
-wav_data_path = Path(".", "trimmed_files")
+if __name__ == "__main__":
+    wav_data_path = Path(".", "trimmed_files")
+    file_paths, labels = get_svd_paths(wav_data_path)
+    data_to_dump = []
+    for idx, patient in enumerate(tqdm(file_paths, desc="Extracting features...")):
+        patient_features = extract_features(patient)
+        data_to_dump.append(patient_features)
 
-
-file_paths, labels = load_svd(wav_data_path)
-data_to_dump = []
-for idx, patient in enumerate(tqdm(file_paths,  desc="Extracting features...")):
-    features = extract_features(patient)
-    data_to_dump.append(features)
-
-with open("features.csv", "w", encoding="utf8", newline="") as output_file:
-    fc = csv.DictWriter(output_file,
-                        fieldnames=data_to_dump[0].keys())
-    fc.writeheader()
-    fc.writerows(data_to_dump)
+    with open("features.csv", "w", encoding="utf8", newline="") as output_file:
+        fc = csv.DictWriter(output_file,
+                            fieldnames=data_to_dump[0].keys())
+        fc.writeheader()
+        fc.writerows(data_to_dump)
