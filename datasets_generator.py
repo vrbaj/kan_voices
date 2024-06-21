@@ -46,7 +46,6 @@ def compose_dataset(dataset_params: dict) -> None:
                     patient_features.append(int(patient["age"]))
                     if dataset_params["diff_pitch"]:
                         if patient["diff_pitch"] == "nan":
-                            print(f"is nan {idx}")
                             patient_features.append(0.0)
                             nan_in_data = True
                         else:
