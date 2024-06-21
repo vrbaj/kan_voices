@@ -65,7 +65,7 @@ def extract_features(voice_path: Path) -> dict:
     pitch_data[pitch_data == 0] = np.nan
 
     # pitch difference feature
-    diff_pitch = (max(pitch_data) - min(pitch_data)) / min(pitch_data)
+    diff_pitch = (np.nanmax(pitch_data) - np.nanmin(pitch_data)) / np.nanmin(pitch_data)
     features["diff_pitch"] = diff_pitch
 
     # get mean_f0 feature
