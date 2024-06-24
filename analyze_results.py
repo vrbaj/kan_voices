@@ -30,3 +30,6 @@ for _, row in table_results.iterrows():
     print(
         f'{row["data"]} | {str_params[:-2]}| Acc: {row["mean_test_accuracy"]:.5f} - Sen: {row["mean_test_recall"]:.5f}'
         f' - Spe: {row["mean_test_specificity"]:.5f}')
+
+print("")
+print(table_results["data"].value_counts().reset_index())
