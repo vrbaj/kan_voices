@@ -36,15 +36,16 @@ class CustomSMOTE(BaseSampler):
         X_res, y_res = self.smote.fit_resample(X, y)
         return X_res, y_res
 
+
 training_data = Path(".").joinpath("training_data")
 results_data = Path(".").joinpath("results")
 
 
 param_grid_poly = {
-    "classifier__C": [6380],
+    "classifier__C": list(range(1000, 11000, 10)),
     "classifier__kernel": ["poly"],
     "classifier__gamma": ["auto"],
-    "classifier__degree": [5]
+    "classifier__degree": [2, 3, 4, 5, 6]
 }
 param_grid_rbf = {
     "classifier__C": list(range(10, 10000, 10)),
@@ -61,36 +62,33 @@ if __name__ == "__main__":
     td = [str(x.name) for x in training_data.iterdir()]
     tr = [str(x.name) for x in results_path.iterdir()]
     to_do =td #set(td) - set(tr)
-    repeated_validation_iterations = 1000
-    validation_idx = 0
-    for _ in  tqdm.tqdm(range(repeated_validation_iterations)):
-        for training_dataset_str in sorted(to_do):
-            results_file = results_data.joinpath(str(training_dataset_str))
-            results_file.mkdir(exist_ok=True)
+    for training_dataset_str in tqdm.tqdm(sorted(to_do)):
+        results_file = results_data.joinpath(str(training_dataset_str))
+        results_file.mkdir(exist_ok=True)
 
-            training_dataset = training_data.joinpath(training_dataset_str)
-            results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
-            # load dataset
-            train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "dataset.pk"), "rb"))
-            dataset = {"X": np.array(train_set["data"]),
-                       "y": np.array(train_set["labels"])}
+        training_dataset = training_data.joinpath(training_dataset_str)
+        print(f"evaluate {training_dataset}")
+        results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
+        # load dataset
+        train_set = pickle.load(open(training_data.joinpath(str(training_dataset.name), "dataset.pk"), "rb"))
+        dataset = {"X": np.array(train_set["data"]),
+                   "y": np.array(train_set["labels"])}
 
-            pipeline = Pipeline([
-                ('smote', CustomSMOTE()),
-                ('classifier', SVC(max_iter=int(1e6)))
-            ])
-            grid_search = GridSearchCV(pipeline, param_grid_poly, cv=10, scoring=scoring_dict,
-                                       n_jobs=-1, refit=False)
-            grid_search.fit(dataset["X"], dataset["y"])
-            if results_file.joinpath("results.csv").exists():
-                header = False
-            else:
-                header = True
-            pd.DataFrame(grid_search.cv_results_)[
-                ["params", "mean_test_accuracy", "mean_test_recall", "mean_test_specificity"]].to_csv(results_file.joinpath("results.csv"),
-                                                                                                      index=False, mode="a",
-                                                                                                      header=header)
-        validation_idx += 1
+        pipeline = Pipeline([
+            ('classifier', SVC(max_iter=int(1e6)))
+        ])
+        grid_search = GridSearchCV(pipeline, param_grid_poly, cv=10, scoring=scoring_dict,
+                                   n_jobs=-1, refit=False)
+        grid_search.fit(dataset["X"], dataset["y"])
+        if results_file.joinpath("results.csv").exists():
+            header = False
+        else:
+            header = True
+        pd.DataFrame(grid_search.cv_results_)[
+            ["params", "mean_test_accuracy", "mean_test_recall", "mean_test_specificity"]].to_csv(results_file.joinpath("results.csv"),
+                                                                                                  index=False, mode="a",
+                                                                                                  header=header)
+
 
 
 

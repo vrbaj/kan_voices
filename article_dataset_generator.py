@@ -143,19 +143,19 @@ def compose_dataset(dataset_params: dict) -> None:
     dataset_config_to_json(dataset_params, dataset_path.joinpath("config.json"))
 
 if __name__ == "__main__":
-    diff_pitch = [True, False]
-    stdev_f0 = [True, False]
-    spectral_centroid = [True, False]
-    spectral_contrast = [True, False]
-    spectral_flatness = [True, False]
-    spectral_rolloff = [True, False]
-    zcr = [True, False]
-    mfccs = [13, 20]
-    var_mfccs = [True, False]
-    formants = [True, False]
-    lfccs = [True, False]
-    skewness = [True, False]
-    shannon_entropy = [True, False]
+    diff_pitch = [False]
+    stdev_f0 = [True]
+    spectral_centroid = [False]
+    spectral_contrast = [False]
+    spectral_flatness = [False]
+    spectral_rolloff = [False]
+    zcr = [True]
+    mfccs = [13]
+    var_mfccs = [False]
+    formants = [False]
+    lfccs = [True]
+    skewness = [False]
+    shannon_entropy = [True]
 
     sex_of_interest = 0
     age_of_interest = 20
@@ -193,5 +193,5 @@ if __name__ == "__main__":
     while configurations:
         print(f"chunks {processed} / {chunks - 1}")
         chunk, configurations = configurations[:chunk_size], configurations[chunk_size:]
-        r = process_map(compose_dataset, chunk, max_workers=4)
+        r = process_map(compose_dataset, chunk, max_workers=1)
         processed += 1

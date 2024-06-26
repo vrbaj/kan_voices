@@ -21,7 +21,7 @@ dataset["train_label"] = y_train.type(torch.LongTensor)
 dataset["test_input"] = X_test
 dataset["test_label"] = y_test.type(torch.LongTensor)
 
-model = KAN(width=[98, 98, 98, 2], grid=5, k=3)
+model = KAN(width=[98, 98, 49, 2], grid=5, k=3)
 
 
 def train_acc():
@@ -33,8 +33,8 @@ def test_acc():
 
 
 results = model.train(dataset, opt="LBFGS",
-                      steps=20, batch=64, lamb=0.01,
+                      steps=20, batch=512, lamb=0.01,
                       metrics=(train_acc, test_acc),
                       loss_fn=torch.nn.CrossEntropyLoss())
-
+print(results)
 print(results['train_acc'][-1], results['test_acc'][-1])
