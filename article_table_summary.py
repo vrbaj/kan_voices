@@ -5,7 +5,7 @@ file_path = "results_summary.csv"
 data = pd.read_csv(file_path)
 
 # Sort the DataFrame by the last column
-sorted_data = data.sort_values(by=data.columns[-1])
+sorted_data = data.sort_values(by=data.columns[-1], ascending=False)
 
 # Take the first 10 rows
 top_10_rows = sorted_data.head(10)
