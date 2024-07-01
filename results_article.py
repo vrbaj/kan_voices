@@ -19,7 +19,7 @@ def compute_stats(file_path):
         for col in df_excluded.columns:
             results[f"{col}_mean"] = [means[col]]
             results[f"{col}_std"] = [std_devs[col]]
-        results["uar"] = 0.5 * (results["mean_test_recall_mean"] + results["mean_test_specificity_mean"])
+        results["uar"] = 0.5 * (results["mean_test_recall_mean"][0] + results["mean_test_specificity_mean"][0])
     except Exception as ex:
         return False
     return results
