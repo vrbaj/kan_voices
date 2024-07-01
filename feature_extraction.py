@@ -58,7 +58,7 @@ def extract_features(voice_path: Path) -> dict:
     raw_data = parselmouth.Sound(str(voice_path))
     pitch = call(raw_data, "To Pitch", 0.0, 50, 500)
     point_process = call(raw_data, "To PointProcess (periodic, cc)", 50, 500)
-    signal, sr = librosa.load(str(voice_path))
+    signal, sr = librosa.load(str(voice_path), sr=None)
 
     # estimate pitch
     pitch_data = pitch.selected_array['frequency']
@@ -190,14 +190,14 @@ def get_svd_paths(datasets_path: Path) -> list:
 
 
 if __name__ == "__main__":
-    wav_data_path = Path(".", "trimmed_files")
+    wav_data_path = Path(".", "augmented_dataset")
     file_paths = get_svd_paths(wav_data_path)
     data_to_dump = []
     for patient in tqdm(file_paths, desc="Extracting features..."):
         patient_features = extract_features(patient)
         data_to_dump.append(patient_features)
 
-    with open("features.csv", "w", encoding="utf8", newline="") as output_file:
+    with open("features_pitched.csv", "w", encoding="utf8", newline="") as output_file:
         fc = csv.DictWriter(output_file,
                             fieldnames=data_to_dump[0].keys())
         fc.writeheader()

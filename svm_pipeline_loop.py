@@ -41,10 +41,11 @@ results_data = Path(".").joinpath("results")
 
 
 param_grid_poly = {
-    "classifier__C": [6380],
+    "classifier__C": [2600],
     "classifier__kernel": ["poly"],
     "classifier__gamma": ["auto"],
-    "classifier__degree": [5]
+    "classifier__degree": [5],
+
 }
 param_grid_rbf = {
     "classifier__C": list(range(10, 10000, 10)),
@@ -77,7 +78,7 @@ if __name__ == "__main__":
 
             pipeline = Pipeline([
                 ('smote', CustomSMOTE()),
-                ('classifier', SVC(max_iter=int(1e6)))
+                ('classifier', SVC(max_iter=int(1e6), class_weight={0: 1.1}))
             ])
             grid_search = GridSearchCV(pipeline, param_grid_poly, cv=10, scoring=scoring_dict,
                                        n_jobs=-1, refit=False)
