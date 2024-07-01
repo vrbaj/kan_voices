@@ -9,13 +9,16 @@ min_spec = 0.8  # 0.8394
 results_dir = Path("results")
 temp_df_list = []
 for path in results_dir.glob("**/results.csv"):
-    temp_df_list.append(pd.read_csv(path))
+    df = pd.read_csv(path)
+    df['uar'] = df.apply(lambda row: (row.mean_test_recall + row.mean_test_specificity) / 2, axis=1)
+
+    temp_df_list.append(df)
     temp_df_list[-1]["data"] = path.parent.name
 
 table_results = pd.concat(temp_df_list)
 table_results = table_results[(table_results.mean_test_accuracy >= min_acc) &
                               (table_results.mean_test_recall >= min_recall) &
-                              (table_results.mean_test_specificity >= min_spec)].sort_values("mean_test_accuracy")
+                              (table_results.mean_test_specificity >= min_spec)].sort_values("uar")
 
 for _, row in table_results.iterrows():
     str_params = ""
@@ -29,7 +32,7 @@ for _, row in table_results.iterrows():
 
     print(
         f'{row["data"]} | {str_params[:-2]}| Acc: {row["mean_test_accuracy"]:.5f} - Sen: {row["mean_test_recall"]:.5f}'
-        f' - Spe: {row["mean_test_specificity"]:.5f}')
+        f' - Spe: {row["mean_test_specificity"]:.5f} - UAR {row["uar"]:.5f}')
 
 print("")
 print(table_results["data"].value_counts().reset_index())
