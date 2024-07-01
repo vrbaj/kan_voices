@@ -8,6 +8,8 @@ def compute_stats(file_path):
     try:
         df = pd.read_csv(file_path)
 
+        df = df[~df["params"].str.contains("'classifier__degree': 2", na=False)]
+        df = df[~df["params"].str.contains("'classifier__degree': 6", na=False)]
         # Exclude the first column
         df_excluded = df.iloc[:, 1:]
 
