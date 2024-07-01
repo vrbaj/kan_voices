@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import tqdm
 import pandas as pd
 
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     path_to_results = Path(".", "results")
     result_summary = Path("results_summary.csv")
     do_header = True
-    for result_dir in path_to_results.iterdir():
+    for result_dir in tqdm.tqdm(path_to_results.iterdir()):
         result_file = result_dir.joinpath("results.csv")
         exp_stats = compute_stats(result_file)
         if exp_stats:
