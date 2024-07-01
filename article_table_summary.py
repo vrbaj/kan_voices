@@ -15,7 +15,7 @@ sorted_data = data.sort_values(by=data.columns[-2], ascending=False)
 top_10_rows = sorted_data.head(10)
 
 # Format the numeric values as percentages with two decimal points
-formatted_top_10_rows = top_10_rows.applymap(lambda x: f"{x * 100:.2f}%" if isinstance(x, (int, float)) else x)
+formatted_top_10_rows = top_10_rows.applymap(lambda x: f"{round(x * 100, 2):.2f}" if isinstance(x, (int, float)) else x)
 
 # Save the top 10 rows as a LaTeX table
 latex_table = formatted_top_10_rows.to_latex(index=False)
