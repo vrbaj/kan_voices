@@ -37,8 +37,8 @@ class CustomSMOTE(BaseSampler):
         return X_res, y_res
 
 
-training_data = Path(".").joinpath("training_data_extensive")
-results_data = Path(".").joinpath("results_extensive")
+training_data = Path(".").joinpath("training_data")
+results_data = Path(".").joinpath("results")
 
 
 param_grid_poly = {
@@ -64,13 +64,13 @@ if __name__ == "__main__":
     tr = [str(x.name) for x in results_path.iterdir()]
     to_do =td #set(td) - set(tr)
     for training_dataset_str in tqdm.tqdm(sorted(to_do)):
+        results_file = results_data.joinpath(str(training_dataset_str))
         try:
-            results_file = results_data.joinpath(str(training_dataset_str))
-            df = pd.read_csv(results_file)
+            df = pd.read_csv(results_file.joinpath("results.csv"))
         except:
-            df = {"params": "..."}
+            df = pd.DataFrame.from_dict({"params": ["..."]})
 
-        if not df["params"].str.contains("'classifier__degree': 6", na=False):
+        if not any(df["params"].str.contains("'classifier__degree': 6", na=False)):
             training_dataset = training_data.joinpath(training_dataset_str)
             print(f"evaluate {training_dataset}")
             results_data.joinpath(str(training_dataset.name)).mkdir(parents=True, exist_ok=True)
