@@ -37,8 +37,8 @@ class CustomSMOTE(BaseSampler):
         return X_res, y_res
 
 
-training_data = Path(".").joinpath("training_data")
-results_data = Path(".").joinpath("results")
+training_data = Path(".").joinpath("training_data_extensive")
+results_data = Path(".").joinpath("results_extensive")
 
 
 param_grid_poly = {
